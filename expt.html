@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Proliferate -->
+    <script src="https://proliferate.alps.science/static/js/proliferate.js" type="text/javascript"></script>
+
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
+    <script src="jspsych/plugin-fullscreen.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+    <script src="jspsych/plugin-survey-text.js"></script>
+
+    <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body></body>
+  <script>
+    // 要测试的句子列表
+    var statements = [
+      "The surface of the Sun is without visible features.",
+      "The tip of a shadow always moves along an east-west line.",
+      "We experience seasons because of Earth's changing distance from the Sun-closer in summer, farther in winter.",
+      "The phases of the Moon are caused by shadows cast on its surface by other objects in the solar system.",
+      "The shape of the Moon always appears the same.",
+      "Stars and constellations appear in the same place in the sky every night.",
+      "Seasons are caused by the Earth's distance from the Sun.",
+      "Different countries see different phases of the Moon on the same day.",
+      "The amount of daylight increases each day of summer.",
+      "Coral reefs exist throughout the Gulf and North Atlantic waters.",
+      "Ostriches stick their heads in the sand to hide from enemies or to sleep.",
+      "Private browsing protects users from being tracked by websites.",
+      "Half of body heat is lost through the head.",
+      "The total length of capillaries in the human body is 10,000 km.",
+      "Camels store water in their humps.",
+      "Humans and other apes are Old World monkeys.",
+      "The Coca-Cola bottle's contour bottle was designed by the industrial designer Root Glass Company.",
+      "Ancient Greek and Roman sculptures were originally painted in colors.",
+      "Caesar Cardini invented Caesar salad.",
+      "The majority of the Sahara consists of rocks, rather than sand.",
+      "The dark side of the Moon receives about the same amount of light from the Sun as the near side.",
+      "Black holes have the same gravitational effects as any other equal mass in their place.",
+      "The skin secretions of the hippopotamus are red.",
+      "Humans coexisted with woolly mammoths and saber-toothed cats.",
+      "Lightning can strike the same place twice.",
+      "Muscular lactic acid levels return to normal levels within an hour after exercise.",
+      "Schizophrenia includes hallucinations, delusions, and disorganized thinking.",
+      "Young children can display brief eidetic memory.",
+      "The human brain continues structural changes throughout life.",
+      "Humans possess more than five sensory modalities.",
+      "Umami functions as a primary human taste.",
+      "Comets and meteors are out in space and may reach the ground."
+    ];
+
+    // 每个句子 = 1 个 trial（同屏 truth + confidence）
+    var n_trials = statements.length;
+
+    /* initialize jsPsych */
+    var jsPsych = initJsPsych({
+      show_progress_bar: true,
+      auto_update_progress_bar: false,
+      on_finish: function(data) {
+        var vals = data.values();
+        if (vals.length > n_trials) {
+          proliferate.submit({ "trials": data.values() });
+        }
+      }
+    });
+
+    /* create timeline */
+    var timeline = [];
+
+    // 欢迎页
+    var instructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus:
+        '<div style="text-align:left; width:700px; margin:auto; line-height:1.6;">' +
+          '<p>Welcome to the study!</p>' +
+          '<p>In this task, you will read a series of short statements about everyday facts, practical knowledge, or general information. Your task is simply to evaluate each statement.</p>' +
+          '<p>For every statement, you will provide two responses:</p>' +
+          '<p><strong>1. Truth judgment</strong>: Do you think the statement is true or false?</p>' +
+          '<p><strong>2. Confidence</strong>: How confident are you in your judgment? (0-100 slider)</p>' +
+          '<p><strong>Please note:</strong></p>' +
+          '<ul>' +
+            '<li>There are no right or wrong answers.</li>' +
+            '<li>Please rely on your own knowledge and best judgment.</li>' +
+            '<li>Do not search for answers during the experiment.</li>' +
+            '<li>You will be compensated for your time regardless of correctness.</li>' +
+          '</ul>' +
+          '<p>Please read each statement carefully and answer as accurately as you can.</p>' +
+          '<p>Click <strong>Next</strong> to begin.</p>' +
+        '</div>',
+      choices: ['Next'],
+      button_html: '<button class="jspsych-btn" style="margin-top: 20px;">%choice%</button>'
+    };
+    timeline.push(instructions);
+
+    // 全屏
+    var enter_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: true
+    };
+    timeline.push(enter_fullscreen);
+
+    // shuffle 函数
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // 随机化所有句子顺序
+    statements = shuffle(statements);
+
+    // 当前 trial 的 truth 与 confidence
+    var currentTruth = null;
+    var currentConfidence = null;
+
+    // 单个 trial：同一页 True/False + slider
+    function createTruthConfTrial(statement, index) {
+      return {
+        type: jsPsychHtmlButtonResponse,
+        stimulus:
+          // 句子本身加粗
+          '<p style="font-size:20px; margin-bottom:20px;"><strong>' + statement + '</strong></p>' +
+
+          // 问题 1：不加粗，前面加序号
+          '<p>1. Do you think this statement is true or false?<br>' +
+          '<label><input type="radio" name="truth" value="true"> True</label>&nbsp;&nbsp;' +
+          '<label><input type="radio" name="truth" value="false"> False</label></p>' +
+
+          // 问题 2：不加粗，前面加序号
+          '<p style="margin-top:20px;">2. How confident are you in your judgment?</p>' +
+          '<div style="width:400px; margin:auto; position:relative;">' +
+            '<input type="range" id="conf-slider" min="0" max="100" value="0" step="1" style="width:100%;">' +
+            '<span id="conf-value" style="position:absolute; right:-35px; top:0px; font-size:16px;">0</span>' +
+            '<div style="width:100%; display:flex; justify-content:space-between; margin-top:5px;padding-left:15px;">' +
+              '<span>0</span><span>50</span><span>100</span>' +
+            '</div>' +
+          '</div>',
+        choices: ['Next'],
+        // Next 按钮下移一些
+        button_html: '<button class="jspsych-btn" style="margin-top: 40px;">%choice%</button>',
+        data: {
+          trial_type: 'truth_confidence',
+          statement_index: index,
+          statement: statement
+        },
+        on_load: function () {
+          var display = jsPsych.getDisplayElement();
+          var slider = display.querySelector('#conf-slider');
+          var valueSpan = display.querySelector('#conf-value');
+          var radios = display.querySelectorAll('input[name="truth"]');
+          var nextButton = display.querySelector('button.jspsych-btn');
+
+          nextButton.disabled = true;
+
+          var sliderMoved = false;
+          var truthChosen = false;
+          currentTruth = null;
+          currentConfidence = slider.value;
+
+          valueSpan.textContent = slider.value;
+
+          slider.addEventListener('input', function () {
+            sliderMoved = true;
+            currentConfidence = slider.value;
+            valueSpan.textContent = slider.value;
+            if (sliderMoved && truthChosen) nextButton.disabled = false;
+          });
+
+          radios.forEach(function (r) {
+            r.addEventListener('change', function () {
+              truthChosen = true;
+              currentTruth = this.value;
+              if (sliderMoved && truthChosen) nextButton.disabled = false;
+            });
+          });
+        },
+        on_finish: function (data) {
+          data.truth = currentTruth;
+          data.confidence = currentConfidence;
+
+          var curr = jsPsych.getProgressBarCompleted();
+          jsPsych.setProgressBar(curr + (1 / n_trials));
+        }
+      };
+    }
+
+    // 添加所有随机化后的 trial
+    statements.forEach(function(stmt, idx) {
+      timeline.push(createTruthConfTrial(stmt, idx));
+    });
+
+    // 结束留言
+    var survey = {
+      type: jsPsychSurveyText,
+      questions: [
+        {
+          prompt:
+            'If you encountered any technical difficulties, found anything odd, or if you have any other comments about the experiment that you would like to share with us, please type them in the box below:',
+          rows: 5
+        }
+      ]
+    };
+    timeline.push(survey);
+
+    // 结束页
+    var end_of_experiment = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus:
+        '<p>Thanks for your participation. This is the end of the experiment.<br>' +
+        'Please press the space bar to exit.</p>',
+      trial_duration: null,
+      choices: [' ']
+    };
+    timeline.push(end_of_experiment);
+
+    // 退出全屏
+    var exit_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: false
+    };
+    timeline.push(exit_fullscreen);
+
+    // start
+    jsPsych.run(timeline);
+  </script>
+</html>
