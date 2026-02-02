@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Proliferate -->
+    <script src="https://proliferate.alps.science/static/js/proliferate.js" type="text/javascript"></script>
+
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
+    <script src="jspsych/plugin-fullscreen.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+    <script src="jspsych/plugin-survey-text.js"></script>
+
+    <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body></body>
+  <script>
+    // 要测试的句子列表
+        var statements = [
+      "A week has seven days.",
+      "After exercise, muscle lactate levels often return close to normal within about an hour.",
+      "An email address contains the '@' symbol.",
+      "Ancient Greek and Roman sculptures were originally painted in colors.",
+      "Antibiotics can help the body recover from most viral infections.",
+      "Being logged into a service in one tab can affect what you see on other websites in the same browser.",
+      "Black holes have the same gravitational effects as any other equal mass in their place.",
+      "Caesar salad is widely credited to Caesar Cardini.",
+      "Camels keep a supply of water in their humps to survive long trips without drinking.",
+      "Closing an app on your phone always stops it from using the internet.",
+      "Coral reefs are common across the Arctic and Southern Ocean waters.",
+      "During summer, daylight generally increases as the weeks go by.",
+      "During the Middle Ages, most major European cities had clean and reliable drinking water.",
+      "End-to-end encryption means only the sender and receiver can read the messages.",
+      "Everyone in the world speaks the same language.",
+      "From night to night, the Moon's overall shape usually looks about the same.",
+      "From one night to the next, constellations usually appear in the same place in the sky.",
+      "Hippos produce skin secretions that can appear reddish.",
+      "Humans can breathe underwater without equipment.",
+      "Humans lived at the same time as woolly mammoths and some sabre-toothed cats.",
+      "Humans possess more than five sensory modalities.",
+      "If you are cold, drinking alcohol helps your body stay warm.",
+      "In cold weather, most of your body heat is lost through your head.",
+      "In the past, most wars were fought mainly at sea rather than on land.",
+      "Lightning can strike the same place more than once.",
+      "Many ancient civilizations developed in cold, mountainous regions.",
+      "Many of the hottest places on Earth are in dry subtropical areas.",
+      "Most of the oxygen in the air comes from forests rather than the ocean.",
+      "Most of the Sahara is rocky, not sandy.",
+      "On the same calendar day, people in different countries can see different Moon phases.",
+      "Over the course of a day, the tip of a shadow tends to move mainly from west to east.",
+      "Private browsing prevents websites from tracking what you do online.",
+      "Regularly cracking your knuckles can increase your risk of arthritis later in life.",
+      "Schizophrenia can include hallucinations, delusions, and disorganized thinking.",
+      "Seasons are mainly caused by the tilt of the Earth.",
+      "The Coca-Cola bottle's contour shape was designed by the Root Glass Company.",
+      "The coldest places on Earth are always found in the Northern Hemisphere.",
+      "The far side of the Moon receives about as much sunlight as the near side.",
+      "The heart pumps blood through the body.",
+      "The human brain continues to undergo structural changes throughout life.",
+      "The Moon produces its own light.",
+      "The phases of the Moon are caused by shadows falling across the Moon’s surface.",
+      "The printing press was first developed in the 1600s.",
+      "The Roman Empire collapsed mainly because of a major natural disaster.",
+      "The Roman Empire expanded mostly because it avoided military conflict.",
+      "The surface of the Sun is without visible features.",
+      "Touching a baby bird will usually make its parents abandon it.",
+      "Turning off 'location' for one app does not automatically stop other apps from accessing your location.",
+      "Umami functions as a primary human taste.",
+      "Using a VPN makes your online activity completely anonymous.",
+      "Water freezes at 0 degrees Celsius under normal conditions.",
+      "When threatened, ostriches often hide by sticking their heads in the sand."
+    ];
+
+
+    // 每个句子 = 1 个 trial（同屏 truth + confidence）
+    var n_trials = statements.length;
+
+    /* initialize jsPsych */
+    var jsPsych = initJsPsych({
+      show_progress_bar: true,
+      auto_update_progress_bar: false,
+      on_finish: function(data) {
+        var vals = data.values();
+        if (vals.length > n_trials) {
+          proliferate.submit({ "trials": data.values() });
+        }
+      }
+    });
+
+    /* create timeline */
+    var timeline = [];
+
+    // 欢迎页
+    var instructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus:
+        '<div style="text-align:left; width:700px; margin:auto; line-height:1.6;">' +
+          '<p>Welcome to the study!</p>' +
+          '<p>In this task, you will read a series of short statements about everyday facts, practical knowledge, or general information. Your task is simply to evaluate each statement.</p>' +
+          '<p>For every statement, you will provide two responses:</p>' +
+          '<p><strong>1. True/False decision</strong>: Do you think the statement is true or false?</p>' +
+          '<p><strong>2. Confidence</strong>: How confident are you in your choice? (0-100 slider)</p>' +
+          '<p><strong>Please note:</strong></p>' +
+          '<ul>' +
+            // '<li>There are no right or wrong answers.</li>' +
+            '<li>You will have up to <strong>15 minutes</strong> to complete the task. After that, the task will end automatically.</li>' +
+            '<li>Please rely on your own knowledge and intuition.</li>' +
+            '<li>Do not search for answers during the experiment.</li>' +
+            '<li>You will be compensated for your time regardless of correctness.</li>' +
+          '</ul>' +
+          '<p>Please read each statement carefully and answer as accurately as you can.</p>' +
+          '<p>Click <strong>Next</strong> to begin.</p>' +
+        '</div>',
+      choices: ['Next'],
+      button_html: '<button class="jspsych-btn" style="margin-top: 20px;">%choice%</button>'
+    };
+    timeline.push(instructions);
+
+    // 全屏
+    var enter_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: true
+    };
+    timeline.push(enter_fullscreen);
+
+    // shuffle 函数
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // 随机化所有句子顺序
+    statements = shuffle(statements);
+
+    // 当前 trial 的 truth 与 confidence
+    var currentTruth = null;
+    var currentConfidence = null;
+
+    // // 单个 trial：同一页 True/False + slider
+    // function createTruthConfTrial(statement, index) {
+    //   return {
+    //     type: jsPsychHtmlButtonResponse,
+    //     stimulus:
+    //       // 句子本身加粗
+    //       '<p style="font-size:20px; margin-bottom:20px;"><strong>' + statement + '</strong></p>' +
+
+    //       // 问题 1：不加粗，前面加序号
+    //       '<p>1. Do you think this statement is true or false?<br>' +
+    //       '<label><input type="radio" name="truth" value="true"> True</label>&nbsp;&nbsp;' +
+    //       '<label><input type="radio" name="truth" value="false"> False</label></p>' +
+
+    //       // 问题 2：不加粗，前面加序号
+    //       '<p style="margin-top:20px;">2. How confident are you in your choice?</p>' +
+    //       '<div style="width:400px; margin:auto; position:relative;">' +
+    //         '<input type="range" id="conf-slider" min="0" max="100" value="0" step="1" style="width:100%;">' +
+    //         '<span id="conf-value" style="position:absolute; right:-35px; top:0px; font-size:16px;">0</span>' +
+    //         '<div style="width:100%; display:flex; justify-content:space-between; margin-top:5px;padding-left:15px;">' +
+    //           '<span>0</span><span>50</span><span>100</span>' +
+    //         '</div>' +
+    //       '</div>',
+    //     choices: ['Next'],
+    //     // Next 按钮下移一些
+    //     button_html: '<button class="jspsych-btn" style="margin-top: 40px;">%choice%</button>',
+    //     data: {
+    //       trial_type: 'truth_confidence',
+    //       statement_index: index,
+    //       statement: statement
+    //     },
+    //     on_load: function () {
+    //       var display = jsPsych.getDisplayElement();
+    //       var slider = display.querySelector('#conf-slider');
+    //       var valueSpan = display.querySelector('#conf-value');
+    //       var radios = display.querySelectorAll('input[name="truth"]');
+    //       var nextButton = display.querySelector('button.jspsych-btn');
+
+    //       nextButton.disabled = true;
+
+    //       var sliderMoved = false;
+    //       var truthChosen = false;
+    //       currentTruth = null;
+    //       currentConfidence = slider.value;
+
+    //       valueSpan.textContent = slider.value;
+
+    //       slider.addEventListener('input', function () {
+    //         sliderMoved = true;
+    //         currentConfidence = slider.value;
+    //         valueSpan.textContent = slider.value;
+    //         if (sliderMoved && truthChosen) nextButton.disabled = false;
+    //       });
+
+    //       radios.forEach(function (r) {
+    //         r.addEventListener('change', function () {
+    //           truthChosen = true;
+    //           currentTruth = this.value;
+    //           if (sliderMoved && truthChosen) nextButton.disabled = false;
+    //         });
+//     //       });
+//     //     },
+//     //     on_finish: function (data) {
+//     //       data.truth = currentTruth;
+//     //       data.confidence = currentConfidence;
+
+//     //       var curr = jsPsych.getProgressBarCompleted();
+//     //       jsPsych.setProgressBar(curr + (1 / n_trials));
+//     //     }
+//     //   };
+//     // }
+//     function createTruthConfTrial(statement, index) {
+//   return {
+//     type: jsPsychHtmlButtonResponse,
+//     stimulus:
+//       '<p style="font-size:20px; margin-bottom:20px;"><strong>' + statement + '</strong></p>' +
+
+//       // Q1
+//       '<div id="q1">' +
+//         '<p>1. Do you think this statement is true or false?<br>' +
+//         '<label><input type="radio" name="truth" value="true"> True</label>&nbsp;&nbsp;' +
+//         '<label><input type="radio" name="truth" value="false"> False</label></p>' +
+//       '</div>' +
+
+//       // Q2（初始隐藏）
+//       '<div id="q2" style="display:none; margin-top:20px;">' +
+//         '<p>2. How confident are you in your choice?</p>' +
+//         '<div style="width:400px; margin:auto; position:relative;">' +
+//           '<input type="range" id="conf-slider" min="0" max="100" value="0" step="1" style="width:100%;">' +
+//           '<span id="conf-value" style="position:absolute; right:-35px; top:0px; font-size:16px;">0</span>' +
+//           '<div style="width:100%; display:flex; justify-content:space-between; margin-top:5px; padding-left:15px;">' +
+//             '<span>0</span><span>50</span><span>100</span>' +
+//           '</div>' +
+//         '</div>' +
+//       '</div>',
+//     choices: ['Next'],
+//     button_html: '<button class="jspsych-btn" style="margin-top: 40px;">%choice%</button>',
+//     data: {
+//       trial_type: 'truth_confidence',
+//       statement_index: index,
+//       statement: statement
+//     },
+//     on_load: function () {
+//       var display = jsPsych.getDisplayElement();
+
+//       var q2 = display.querySelector('#q2');
+//       var slider = display.querySelector('#conf-slider');
+//       var valueSpan = display.querySelector('#conf-value');
+//       var radios = display.querySelectorAll('input[name="truth"]');
+//       var nextButton = display.querySelector('button.jspsych-btn');
+
+//       nextButton.disabled = true;
+
+//       var truthChosen = false;
+//       var sliderMoved = false;
+
+//       currentTruth = null;
+//       currentConfidence = slider.value;
+//       valueSpan.textContent = slider.value;
+
+//       // Q1：选了之后显示 Q2
+//       radios.forEach(function (r) {
+//         r.addEventListener('change', function () {
+//           truthChosen = true;
+//           currentTruth = this.value;
+//           q2.style.display = 'block';
+//         });
+//       });
+
+//       // Q2：slider 被动过才允许 Next
+//       slider.addEventListener('input', function () {
+//         sliderMoved = true;
+//         currentConfidence = slider.value;
+//         valueSpan.textContent = slider.value;
+
+//         if (truthChosen && sliderMoved) {
+//           nextButton.disabled = false;
+//         }
+//       });
+//     },
+//     on_finish: function (data) {
+//       data.truth = currentTruth;
+//       data.confidence = currentConfidence;
+
+//       var curr = jsPsych.getProgressBarCompleted();
+//       jsPsych.setProgressBar(curr + (1 / n_trials));
+//     }
+//   };
+// }
+function createTruthConfTrial(statement, index) {
+      return {
+        type: jsPsychHtmlButtonResponse,
+
+        stimulus:
+          '<p style="font-size:20px; margin-bottom:20px;"><strong>' + statement + '</strong></p>' +
+
+          '<div id="q1">' +
+            '<p>1. Do you think this statement is true or false?<br>' +
+            '<label><input type="radio" name="truth" value="true"> True</label>&nbsp;&nbsp;' +
+            '<label><input type="radio" name="truth" value="false"> False</label></p>' +
+          '</div>' +
+
+              '<div id="q2" style="visibility:hidden; margin-top:20px; min-height:160px;">' +
+      '<p>2. How confident are you in your choice?</p>' +
+      '<div style="width:400px; margin:auto; position:relative;">' +
+        '<input type="range" id="conf-slider" min="0" max="100" value="0" step="1" style="width:100%;">' +
+        '<span id="conf-value" style="position:absolute; right:-35px; top:0px;">0</span>' +
+        '<div style="width:100%; display:flex; justify-content:space-between; margin-top:5px; padding-left:15px;">' +
+          '<span>0</span><span>50</span><span>100</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>',
+
+
+        choices: ['Next'],
+        button_html: '<button class="jspsych-btn" style="margin-top:40px;">%choice%</button>',
+
+        on_load: function () {
+          var display = jsPsych.getDisplayElement();
+          var q2 = display.querySelector('#q2');
+          var slider = display.querySelector('#conf-slider');
+          var valueSpan = display.querySelector('#conf-value');
+          var radios = display.querySelectorAll('input[name="truth"]');
+          var nextButton = display.querySelector('button.jspsych-btn');
+
+          nextButton.disabled = true;
+
+          currentConfidence = slider.value;
+          valueSpan.textContent = slider.value;
+
+          radios.forEach(function (r) {
+            r.addEventListener('change', function () {
+              currentTruth = this.value;
+              q2.style.visibility = 'visible';
+            });
+          });
+
+          slider.addEventListener('input', function () {
+            currentConfidence = slider.value;
+            valueSpan.textContent = slider.value;
+            if (currentTruth !== null) nextButton.disabled = false;
+          });
+        },
+
+        on_finish: function (data) {
+          data.truth = currentTruth;
+          data.confidence = currentConfidence;
+          jsPsych.setProgressBar(jsPsych.getProgressBarCompleted() + 1 / n_trials);
+        }
+      };
+    }
+
+    
+    // 添加所有随机化后的 trial
+    statements.forEach(function(stmt, idx) {
+      timeline.push(createTruthConfTrial(stmt, idx));
+    });
+
+    // 结束留言
+    // var survey = {
+    //   type: jsPsychSurveyText,
+    //   questions: [
+    //     {
+    //       prompt:
+    //         'If you encountered any technical difficulties, found anything odd, or if you have any other comments about the experiment that you would like to share with us, please type them in the box below:',
+    //       rows: 5
+    //     }
+    //   ]
+    // };
+    // timeline.push(survey);
+
+// test留言
+    var survey = {
+      type: jsPsychSurveyText,
+      questions: [
+        {
+          prompt:
+            'Test version only: Please enter your name below so your responses can be identified during internal testing.',
+          rows: 5
+        }
+      ]
+    };
+    timeline.push(survey);
+
+    // 结束页
+    var end_of_experiment = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus:
+        '<p>Thanks for your participation. This is the end of the experiment.<br>' +
+        'Please press the space bar to exit.</p>',
+      trial_duration: null,
+      choices: [' ']
+    };
+    timeline.push(end_of_experiment);
+
+    // 退出全屏
+    var exit_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: false
+    };
+    timeline.push(exit_fullscreen);
+
+    // start
+    jsPsych.run(timeline);
+  </script>
+</html>
